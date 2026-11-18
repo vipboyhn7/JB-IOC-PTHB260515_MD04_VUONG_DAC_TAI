@@ -1,0 +1,42 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  application:
+    name: student-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/student_db}
+    username: ${DB_USERNAME:student}
+    password: ${DB_PASSWORD:123}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  cloud:
+    openfeign:
+      client:
+        config:
+          course-service:
+            connectTimeout: 3000
+            readTimeout: 5000
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: '%5p [requestId=%X{requestId:-}]'

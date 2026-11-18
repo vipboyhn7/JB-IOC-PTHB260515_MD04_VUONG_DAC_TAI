@@ -1,0 +1,2 @@
+rootProject.name = 'student-course-microservices'
+include 'service-registry', 'api-gateway', 'student-service', 'course-service'

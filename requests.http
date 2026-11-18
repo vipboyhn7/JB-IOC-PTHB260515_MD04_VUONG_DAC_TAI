@@ -1,0 +1,45 @@
+### Dùng IntelliJ HTTP Client; chạy tuần tự để tự lưu ID.
+@baseUrl = http://localhost:8080
+
+### Tạo sinh viên (đổi email nếu đã chạy trước đó)
+POST {{baseUrl}}/api/students
+Content-Type: application/json
+
+{"name":"Nguyễn Văn An","email":"an-demo@example.com"}
+
+> {% client.global.set("studentId", response.body.id); %}
+
+### Tạo khóa học
+POST {{baseUrl}}/api/courses
+Content-Type: application/json
+
+{"courseName":"Microservices với Spring Boot","capacity":2,"credits":3}
+
+> {% client.global.set("courseId", response.body.id); %}
+
+### Đăng ký; lần đầu 200, chạy lại 409
+POST {{baseUrl}}/api/students/enroll
+Content-Type: application/json
+
+{"studentId":{{studentId}},"courseId":{{courseId}}}
+
+### Xem mảng enrolledCourses
+GET {{baseUrl}}/api/students/{{studentId}}
+
+### Xem capacity đã giảm
+GET {{baseUrl}}/api/courses/{{courseId}}
+
+### Danh sách sinh viên
+GET {{baseUrl}}/api/students
+
+### Danh sách khóa học
+GET {{baseUrl}}/api/courses
+
+### Validation: 400
+POST {{baseUrl}}/api/students/enroll
+Content-Type: application/json
+
+{"studentId":-1}
+
+### Gateway health
+GET {{baseUrl}}/actuator/health

@@ -1,0 +1,74 @@
+services:
+  student-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: student_db
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: ${STUDENT_DB_PASSWORD:-123}
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: ["student-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d student_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  course-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: course_db
+      POSTGRES_USER: course
+      POSTGRES_PASSWORD: ${COURSE_DB_PASSWORD:-123}
+    ports: ["127.0.0.1:5434:5432"]
+    volumes: ["course-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U course -d course_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  service-registry:
+    build:
+      context: .
+      args: { SERVICE: service-registry }
+    ports: ["8761:8761"]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8761'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  student-service:
+    build:
+      context: .
+      args: { SERVICE: student-service }
+    environment:
+      EUREKA_URL: http://service-registry:8761/eureka/
+      DB_URL: jdbc:postgresql://student-db:5432/student_db
+      DB_PASSWORD: ${STUDENT_DB_PASSWORD:-123}
+    depends_on:
+      student-db: { condition: service_healthy }
+      service-registry: { condition: service_healthy }
+  course-service:
+    build:
+      context: .
+      args: { SERVICE: course-service }
+    environment:
+      EUREKA_URL: http://service-registry:8761/eureka/
+      DB_URL: jdbc:postgresql://course-db:5432/course_db
+      DB_PASSWORD: ${COURSE_DB_PASSWORD:-123}
+    depends_on:
+      course-db: { condition: service_healthy }
+      service-registry: { condition: service_healthy }
+  api-gateway:
+    build:
+      context: .
+      args: { SERVICE: api-gateway }
+    ports: ["8080:8080"]
+    environment:
+      EUREKA_URL: http://service-registry:8761/eureka/
+    depends_on:
+      service-registry: { condition: service_healthy }
+      student-service: { condition: service_started }
+      course-service: { condition: service_started }
+volumes:
+  student-data:
+  course-data:

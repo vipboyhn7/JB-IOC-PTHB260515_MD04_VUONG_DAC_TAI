@@ -1,0 +1,13 @@
+.gradle/
+**/build/
+.idea/
+*.iml
+.env
+.DS_Store
+.test-runtime/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+test
